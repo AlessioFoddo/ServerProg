@@ -15,17 +15,16 @@ public class MyThread extends Thread {
       
     private Socket s;
     private Random random;
-    private String username;
     private String codice;
-    private ArrayList<MyThread> contatti;
-    private String password;
+    private ListaUtenti contatti;
+    private Utente user;
+    private int id;
 
-    public MyThread(Socket s, ArrayList<MyThread> lista){
+    public MyThread(Socket s, ListaUtenti lista, int idThreads){
         this.s = s;
         this.contatti = lista;
         random = new Random();
-        username ="";
-        password="";
+        id = idThreads;
     }
 
     public void run() {
@@ -36,6 +35,7 @@ public class MyThread extends Thread {
 
             String scelta;
             scelta = in.readLine();
+            System.out.println(scelta);
             boolean fine = false;
 
             switch (scelta) {
@@ -45,54 +45,56 @@ public class MyThread extends Thread {
                         String u = in.readLine();
                         String p = in.readLine();
                         //controllo utente
-                        int name = 0;
-                        int psw = 0;
-                        for (MyThread utente : contatti) {
-                            if(utente.username.equals(u)){
-                                name = 1;
-                            }   
-                            if(utente.password.equals(p)){
-                                psw = 1;
+                        String answer = "";
+                        for(int i = 0; i < contatti.getSize(); i++){
+                            if((contatti.getUtente(i).getUsername().equals(u)) || (contatti.getUtente(i).getPassword().equals(p))){
+                                answer = "v\n";
+                                user = contatti.getUtente(i);
+                                fine = true;
+                                break;
+                            }else if(!(contatti.getUtente(i).getUsername().equals(u)) || !(contatti.getUtente(i).getPassword().equals(p))){
+                                answer = "!all\n";
+                            }else if(!(contatti.getUtente(i).getPassword().equals(p))){
+                                answer = "!p\n";
+                            }else{
+                                answer = "!u\n";
                             }
                         }
-                        if(name == 1 || psw == 1){
-                            out.writeBytes("\nv");
-                            fine = true;
-                        }else if(name == 0 || psw == 0){
-                            out.writeBytes("\n!all");
-                        }else if(psw == 0){
-                            out.writeBytes("\n!p");
-                        }else{
-                            out.writeBytes("\n!u");
-                        }
+
+                        out.writeBytes(answer);
+                        
                 
                     } while (!fine);
                     
                     break;
 
                 case "2":
-
+                    String u = in.readLine();
+                    System.out.println(u);
+                    if(contatti.getSize() == 0){
+                        out.writeBytes("v\n");
+                    }else{
                         do {
-                            username = in.readLine();
                             //controllo utente
                             int name = 0;
-                            for (MyThread utente : contatti) {
-                                if(utente.username.equals(username)){
+                            for(int i = 0; i < contatti.getSize(); i++){
+                                if(contatti.getUtente(i).getUsername().equals(u)){
                                     name = 1;
-                                    }  
+                                }  
                             }
                             if(name == 1){
-                                out.writeBytes("\n!u");
+                                out.writeBytes("!u\n");
                             }else{
-                                out.writeBytes("\nv");
+                                out.writeBytes("v\n");
                                 fine = true;
                             }
-                
-                        } while (!fine);
-
-                        password = in.readLine();
-
                         
+                        } while (!fine);
+                    }
+
+                    String psw = in.readLine();
+                    user = new Utente(u, psw);
+                    contatti.addUtente(user);
 
                     break;
             
