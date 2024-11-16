@@ -1,3 +1,4 @@
+
 package com.example;
 
 import java.io.BufferedReader;
@@ -14,8 +15,6 @@ import javax.print.DocFlavor.STRING;
 public class MyThread extends Thread {
       
     private Socket s;
-    private Random random;
-    private String codice;
     private ListaUtenti contatti;
     private Utente user;
     private int id;
@@ -23,7 +22,6 @@ public class MyThread extends Thread {
     public MyThread(Socket s, ListaUtenti lista, int idThreads){
         this.s = s;
         this.contatti = lista;
-        random = new Random();
         id = idThreads;
     }
 
@@ -39,62 +37,17 @@ public class MyThread extends Thread {
             boolean fine = false;
 
             switch (scelta) {
-                case "1":
+                case "L_I": //caso LOG IN
 
                     do {
-                        String u = in.readLine();
-                        String p = in.readLine();
-                        //controllo utente
-                        String answer = "";
-                        for(int i = 0; i < contatti.getSize(); i++){
-                            if((contatti.getUtente(i).getUsername().equals(u)) || (contatti.getUtente(i).getPassword().equals(p))){
-                                answer = "v\n";
-                                user = contatti.getUtente(i);
-                                fine = true;
-                                break;
-                            }else if(!(contatti.getUtente(i).getUsername().equals(u)) || !(contatti.getUtente(i).getPassword().equals(p))){
-                                answer = "!all\n";
-                            }else if(!(contatti.getUtente(i).getPassword().equals(p))){
-                                answer = "!p\n";
-                            }else{
-                                answer = "!u\n";
-                            }
-                        }
-
-                        out.writeBytes(answer);
-                        
-                
+                        fine = LogIn(in, out);
                     } while (!fine);
                     
                     break;
 
-                case "2":
-                    String u = in.readLine();
-                    System.out.println(u);
-                    if(contatti.getSize() == 0){
-                        out.writeBytes("v\n");
-                    }else{
-                        do {
-                            //controllo utente
-                            int name = 0;
-                            for(int i = 0; i < contatti.getSize(); i++){
-                                if(contatti.getUtente(i).getUsername().equals(u)){
-                                    name = 1;
-                                }  
-                            }
-                            if(name == 1){
-                                out.writeBytes("!u\n");
-                            }else{
-                                out.writeBytes("v\n");
-                                fine = true;
-                            }
-                        
-                        } while (!fine);
-                    }
-
-                    String psw = in.readLine();
-                    user = new Utente(u, psw);
-                    contatti.addUtente(user);
+                case "S_U": //caso SIGN UP
+                    
+                    SignUp(in, out);
 
                     break;
             
@@ -102,12 +55,78 @@ public class MyThread extends Thread {
                     break;
             }
             
-
+            System.out.println("fuori switch");
+            String nome = in.readLine();
+            System.out.println(nome);
+            
 
             s.close();
         } catch (IOException e) {
             risposta = "!";
         }
     }
-    
+
+    private boolean LogIn(BufferedReader in, DataOutputStream out) throws IOException{
+        boolean fine = false;
+        if(contatti.getSize() == 0){
+            out.writeBytes("noU\n");
+            SignUp(in, out);
+            return true;
+        }else{
+            out.writeBytes("fw\n");
+        }
+        String u = in.readLine();
+        System.out.println(u);
+        String p = in.readLine();
+        System.out.println(p);
+        //controllo utente
+        String answer = "";
+        for(int i = 0; i < contatti.getSize(); i++){
+            if((contatti.getUtente(i).getUsername().equals(u)) || (contatti.getUtente(i).getPassword().equals(p))){
+                answer = "v\n";
+                user = contatti.getUtente(i);
+                fine = true;
+                break;
+            }else if(!(contatti.getUtente(i).getUsername().equals(u)) || !(contatti.getUtente(i).getPassword().equals(p))){
+                answer = "!all\n";
+            }else if(!(contatti.getUtente(i).getPassword().equals(p))){
+                answer = "!p\n";
+            }else{
+                answer = "!u\n";
+            }
+        }
+        out.writeBytes(answer);
+        return fine;
+    }
+
+    private void SignUp(BufferedReader in, DataOutputStream out) throws IOException{
+        boolean fine = false;
+        String u = in.readLine();
+        System.out.println(u);
+        if(contatti.getSize() == 0){
+            out.writeBytes("v\n");
+        }else{
+            do { 
+                //controllo username utente
+                int name = 0;
+                for(int i = 0; i < contatti.getSize(); i++){
+                    if(contatti.getUtente(i).getUsername().equals(u)){
+                        name = 1;
+                    }  
+                }
+                if(name == 1){
+                    out.writeBytes("!u\n");
+                }else{
+                    out.writeBytes("v\n");
+                    fine = true;
+                }
+            
+            } while (!fine);
+        }
+        String psw = in.readLine();
+        System.out.println(psw);
+        user = new Utente(u, psw);
+        contatti.addUtente(user);
+    }
+
 }
