@@ -32,9 +32,36 @@ public class MyThread extends Thread {
             DataOutputStream out = new DataOutputStream(s.getOutputStream());
 
             String scelta;
-            scelta = in.readLine();
-            System.out.println(scelta);
             boolean fine = false;
+
+            do{
+
+                scelta = in.readLine();
+                System.out.println(scelta);
+    
+                switch (scelta) {
+                    case "L_I": //caso LOG IN
+    
+                        fine = LogIn(in, out);
+                        break;
+    
+                    case "S_U": //caso SIGN UP
+                        
+                        fine = SignUp(in, out);
+                        break;
+                
+                    default:
+
+                        fine = false;
+                        break;
+                }
+
+            }while(!fine);
+
+            System.out.println("CIAO");
+
+            /*scelta = in.readLine();
+            System.out.println(scelta);
 
             switch (scelta) {
                 case "L_I": //caso LOG IN
@@ -53,12 +80,7 @@ public class MyThread extends Thread {
             
                 default:
                     break;
-            }
-            
-            System.out.println("fuori switch");
-            String nome = in.readLine();
-            System.out.println(nome);
-            
+            }*/
 
             s.close();
         } catch (IOException e) {
@@ -77,34 +99,47 @@ public class MyThread extends Thread {
         }
         String u = in.readLine();
         System.out.println(u);
+        out.writeBytes("username ricevuto\n");
         String p = in.readLine();
         System.out.println(p);
         //controllo utente
         String answer = "";
+        int name_miss = 0;
         for(int i = 0; i < contatti.getSize(); i++){
-            if((contatti.getUtente(i).getUsername().equals(u)) || (contatti.getUtente(i).getPassword().equals(p))){
+            if((contatti.getUtente(i).getUsername().equals(u)) && (contatti.getUtente(i).getPassword().equals(p))){
                 answer = "v\n";
                 user = contatti.getUtente(i);
                 fine = true;
                 break;
-            }else if(!(contatti.getUtente(i).getUsername().equals(u)) || !(contatti.getUtente(i).getPassword().equals(p))){
+            }else if(!(contatti.getUtente(i).getUsername().equals(u)) && !(contatti.getUtente(i).getPassword().equals(p))){
                 answer = "!all\n";
             }else if(!(contatti.getUtente(i).getPassword().equals(p))){
                 answer = "!p\n";
+                break;
             }else{
-                answer = "!u\n";
+                name_miss = 1;
             }
         }
+        System.out.println(answer);
+        if((answer.equals("!all\n")) && name_miss == 1){
+            answer = "!u\n";
+        }else if(name_miss == 1){
+            answer = "!u\n";
+        }else if(answer.equals("!all\n")){
+            answer = "!all\n";
+        }
+        System.out.println("risposta: " + answer);
         out.writeBytes(answer);
         return fine;
     }
 
-    private void SignUp(BufferedReader in, DataOutputStream out) throws IOException{
+    private boolean SignUp(BufferedReader in, DataOutputStream out) throws IOException{
         boolean fine = false;
         String u = in.readLine();
         System.out.println(u);
         if(contatti.getSize() == 0){
             out.writeBytes("v\n");
+            fine = true;
         }else{
             do { 
                 //controllo username utente
@@ -116,6 +151,8 @@ public class MyThread extends Thread {
                 }
                 if(name == 1){
                     out.writeBytes("!u\n");
+                    fine = false;
+                    return fine;
                 }else{
                     out.writeBytes("v\n");
                     fine = true;
@@ -127,6 +164,7 @@ public class MyThread extends Thread {
         System.out.println(psw);
         user = new Utente(u, psw);
         contatti.addUtente(user);
+        return fine;
     }
 
 }
