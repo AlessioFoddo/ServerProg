@@ -16,12 +16,16 @@ public class MyThread extends Thread {
       
     private Socket s;
     private ListaUtenti contatti;
+    private ListaUtenti listaChat;
+    private ArrayList<MyThread> Threads;
     private Utente user;
     private int id;
 
-    public MyThread(Socket s, ListaUtenti lista, int idThreads){
+    public MyThread(Socket s, ListaUtenti lista, int idThreads, ArrayList<MyThread> list){
         this.s = s;
         this.contatti = lista;
+        this.listaChat = new ListaUtenti();
+        this.Threads = list;
         id = idThreads;
     }
 
@@ -60,27 +64,60 @@ public class MyThread extends Thread {
 
             System.out.println("CIAO");
 
-            /*scelta = in.readLine();
-            System.out.println(scelta);
+            do{
 
-            switch (scelta) {
-                case "L_I": //caso LOG IN
+                scelta = in.readLine();
+                System.out.println(scelta);
+    
+                switch (scelta) {
+                    case "Chat": //caso LOG IN
+    
+                        String uname = in.readLine();
+                        Utente user = contatti.presente(uname);
+                        if(user != null){
+                            out.writeBytes("u_v\n");
+                            listaChat.addUtente(user);
+                        }else{
+                            out.writeBytes("!u\n");
+                            fine = false;
+                            break;
+                        }
+                        
+                        boolean end_chat =false;
+                        do{
+                            String testo = in.readLine();
+                            switch(testo){
 
-                    do {
-                        fine = LogIn(in, out);
-                    } while (!fine);
-                    
-                    break;
+                                case "end":
+                                    end_chat = true;
+                                    break;
 
-                case "S_U": //caso SIGN UP
-                    
-                    SignUp(in, out);
+                                default:
+                                    Utente userChat = listaChat.presente(uname);
+                                    for (MyThread Thread : Threads) {
+                                        if(Thread.user == userChat){
+                                            Thread.receivedText(user.getUsername(), testo, in, out);
+                                            break;
+                                        }
+                                    }
 
-                    break;
-            
-                default:
-                    break;
-            }*/
+                            }
+                        }while(!end_chat);
+    
+                        
+                        break;
+    
+                    case "Members": //caso SIGN UP
+                        
+                        SignUp(in, out);
+    
+                        break;
+                
+                    default:
+                        break;
+                }
+
+            }while(!fine);
 
             s.close();
         } catch (IOException e) {
@@ -165,6 +202,12 @@ public class MyThread extends Thread {
         user = new Utente(u, psw);
         contatti.addUtente(user);
         return fine;
+    }
+
+    public void receivedText(String name, String text, BufferedReader in, DataOutputStream out) throws IOException{
+        out.writeBytes("msg");
+        out.writeBytes(name + "\n");
+        out.writeBytes(text);
     }
 
 }

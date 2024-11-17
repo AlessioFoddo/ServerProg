@@ -1,5 +1,9 @@
 package com.example;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 public class Utente {
     
     private String username;

@@ -19,6 +19,15 @@ public class ListaUtenti {
         return lista.get(i);
     }
 
+    public Utente presente(String uname){
+        for (Utente utente : lista) {
+            if(utente.getUsername().equals(uname)){
+                return utente;
+            }
+        }
+        return null;
+    }
+
     public ListaUtenti(){
         this.lista = new ArrayList<>();
     }

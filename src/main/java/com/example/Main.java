@@ -19,7 +19,7 @@ public class Main {
         do{
             Socket s = server.accept();
             System.out.println("Un client si è collegato!");
-            MyThread t = new MyThread(s, listaUtenti, idThreads);
+            MyThread t = new MyThread(s, listaUtenti, idThreads, listaThread);
             listaThread.add(t);
             t.start();
             idThreads++;
