@@ -70,41 +70,33 @@ public class MyThread extends Thread {
                 System.out.println(scelta);
     
                 switch (scelta) {
-                    case "Chat": //caso LOG IN
-    
-                        String uname = in.readLine();
-                        Utente user = contatti.presente(uname);
-                        if(user != null){
+                    case "Chat":
+                        String uname = in.readLine(); // Nome del destinatario
+                        Utente userChat = contatti.presente(uname);
+
+                        if (userChat != null) {
                             out.writeBytes("u_v\n");
-                            listaChat.addUtente(user);
-                        }else{
-                            out.writeBytes("!u\n");
-                            fine = false;
+                            listaChat.addUtente(userChat);
+                        } else {
+                            out.writeBytes("!u\n"); // Destinatario non trovato
                             break;
                         }
-                        
-                        boolean end_chat =false;
-                        do{
+
+                        boolean endChat = false;
+                        while (!endChat) {
                             String testo = in.readLine();
-                            switch(testo){
-
-                                case "end":
-                                    end_chat = true;
-                                    break;
-
-                                default:
-                                    Utente userChat = listaChat.presente(uname);
-                                    for (MyThread Thread : Threads) {
-                                        if(Thread.user == userChat){
-                                            Thread.receivedText(user.getUsername(), testo, in, out);
-                                            break;
-                                        }
-                                    }
-
+                            if (testo.equals("end")) {
+                                endChat = true;
+                                break;
                             }
-                        }while(!end_chat);
-    
-                        
+
+                            for (MyThread th : Threads) {
+                                if (th.getUser() != null && th.getUser().getUsername().equals(uname)) {
+                                    th.receivedText(user.getUsername(), testo, in, out);
+                                    break;
+                                }
+                            }
+                        }
                         break;
     
                     case "Members": //caso SIGN UP
@@ -205,9 +197,13 @@ public class MyThread extends Thread {
     }
 
     public void receivedText(String name, String text, BufferedReader in, DataOutputStream out) throws IOException{
-        out.writeBytes("msg");
+        out.writeBytes("msg\n");
         out.writeBytes(name + "\n");
-        out.writeBytes(text);
+        out.writeBytes(text + "\n");
+    }
+
+    public Utente getUser(){
+        return user;
     }
 
 }
