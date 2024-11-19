@@ -20,21 +20,22 @@ public class MyThread extends Thread {
     private ArrayList<MyThread> Threads;
     private Utente user;
     private int id;
+    BufferedReader in;
+    DataOutputStream out;
 
-    public MyThread(Socket s, ListaUtenti lista, int idThreads, ArrayList<MyThread> list){
+    public MyThread(Socket s, ListaUtenti lista, int idThreads, ArrayList<MyThread> list) throws IOException{
         this.s = s;
         this.contatti = lista;
         this.listaChat = new ListaUtenti();
         this.Threads = list;
         id = idThreads;
+        this.in = new BufferedReader(new InputStreamReader(s.getInputStream()));
+        this.out = new DataOutputStream(s.getOutputStream());
     }
 
     public void run() {
         String risposta;
         try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            DataOutputStream out = new DataOutputStream(s.getOutputStream());
-
             String scelta;
             boolean fine = false;
 
@@ -46,12 +47,12 @@ public class MyThread extends Thread {
                 switch (scelta) {
                     case "L_I": //caso LOG IN
     
-                        fine = LogIn(in, out);
+                        fine = logIn(in, out);
                         break;
     
                     case "S_U": //caso SIGN UP
                         
-                        fine = SignUp(in, out);
+                        fine = signUp(in, out);
                         break;
                 
                     default:
@@ -92,7 +93,7 @@ public class MyThread extends Thread {
 
                             for (MyThread th : Threads) {
                                 if (th.getUser() != null && th.getUser().getUsername().equals(uname)) {
-                                    th.receivedText(user.getUsername(), testo, in, out);
+                                    th.receivedText(user.getUsername(), testo);
                                     break;
                                 }
                             }
@@ -101,7 +102,7 @@ public class MyThread extends Thread {
     
                     case "Members": //caso SIGN UP
                         
-                        SignUp(in, out);
+                        signUp(in, out);
     
                         break;
                 
@@ -117,11 +118,11 @@ public class MyThread extends Thread {
         }
     }
 
-    private boolean LogIn(BufferedReader in, DataOutputStream out) throws IOException{
+    private boolean logIn(BufferedReader in, DataOutputStream out) throws IOException{
         boolean fine = false;
         if(contatti.getSize() == 0){
             out.writeBytes("noU\n");
-            SignUp(in, out);
+            signUp(in, out);
             return true;
         }else{
             out.writeBytes("fw\n");
@@ -162,7 +163,7 @@ public class MyThread extends Thread {
         return fine;
     }
 
-    private boolean SignUp(BufferedReader in, DataOutputStream out) throws IOException{
+    private boolean signUp(BufferedReader in, DataOutputStream out) throws IOException{
         boolean fine = false;
         String u = in.readLine();
         System.out.println(u);
@@ -196,7 +197,7 @@ public class MyThread extends Thread {
         return fine;
     }
 
-    public void receivedText(String name, String text, BufferedReader in, DataOutputStream out) throws IOException{
+    public void receivedText(String name, String text) throws IOException{
         out.writeBytes("msg\n");
         out.writeBytes(name + "\n");
         out.writeBytes(text + "\n");
