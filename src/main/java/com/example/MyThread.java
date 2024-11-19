@@ -15,7 +15,7 @@ import javax.print.DocFlavor.STRING;
 public class MyThread extends Thread {
       
     private Socket s;
-    private ListaUtenti contatti;
+    private ListaUtenti utenti;
     private ListaUtenti listaChat;
     private ArrayList<MyThread> Threads;
     private Utente user;
@@ -25,7 +25,7 @@ public class MyThread extends Thread {
 
     public MyThread(Socket s, ListaUtenti lista, int idThreads, ArrayList<MyThread> list) throws IOException{
         this.s = s;
-        this.contatti = lista;
+        this.utenti = lista;
         this.listaChat = new ListaUtenti();
         this.Threads = list;
         id = idThreads;
@@ -73,7 +73,7 @@ public class MyThread extends Thread {
                 switch (scelta) {
                     case "Chat":
                         String uname = in.readLine(); // Nome del destinatario
-                        Utente userChat = contatti.presente(uname);
+                        Utente userChat = utenti.presente(uname);
 
                         if (userChat != null) {
                             out.writeBytes("u_v\n");
@@ -98,15 +98,36 @@ public class MyThread extends Thread {
                                 }
                             }
                         }
+                        fine = false;
                         break;
     
                     case "Members": //caso SIGN UP
-                        
-                        signUp(in, out);
-    
+                        for(int i  = 0; i < utenti.getSize(); i++){
+                            int idThread = 0;
+                            for (MyThread th : Threads) {
+                                if(th != null && th.getUser().getUsername().equals(utenti.getUtente(i).getUsername())){
+                                    idThread = th.getterId();
+                                }
+                            }
+                            out.writeBytes("Thread: " + idThread + ", " + utenti.getUtente(i).getUsername() + "\n");
+                        }
+                        out.writeBytes("end\n");
+                        fine = false;
+                        break;
+
+                    case "Out": //caso uscita
+                        user = null;
+                        for(int i = 0; i < Threads.size(); i++){
+                            if(Threads.get(i).getId() == id){
+                                Threads.remove(i);
+                                break;
+                            }
+                        }
+                        fine = true;
                         break;
                 
                     default:
+                        fine = false;
                         break;
                 }
 
@@ -120,7 +141,7 @@ public class MyThread extends Thread {
 
     private boolean logIn(BufferedReader in, DataOutputStream out) throws IOException{
         boolean fine = false;
-        if(contatti.getSize() == 0){
+        if(utenti.getSize() == 0){
             out.writeBytes("noU\n");
             signUp(in, out);
             return true;
@@ -135,15 +156,15 @@ public class MyThread extends Thread {
         //controllo utente
         String answer = "";
         int name_miss = 0;
-        for(int i = 0; i < contatti.getSize(); i++){
-            if((contatti.getUtente(i).getUsername().equals(u)) && (contatti.getUtente(i).getPassword().equals(p))){
+        for(int i = 0; i < utenti.getSize(); i++){
+            if((utenti.getUtente(i).getUsername().equals(u)) && (utenti.getUtente(i).getPassword().equals(p))){
                 answer = "v\n";
-                user = contatti.getUtente(i);
+                user = utenti.getUtente(i);
                 fine = true;
                 break;
-            }else if(!(contatti.getUtente(i).getUsername().equals(u)) && !(contatti.getUtente(i).getPassword().equals(p))){
+            }else if(!(utenti.getUtente(i).getUsername().equals(u)) && !(utenti.getUtente(i).getPassword().equals(p))){
                 answer = "!all\n";
-            }else if(!(contatti.getUtente(i).getPassword().equals(p))){
+            }else if(!(utenti.getUtente(i).getPassword().equals(p))){
                 answer = "!p\n";
                 break;
             }else{
@@ -167,15 +188,15 @@ public class MyThread extends Thread {
         boolean fine = false;
         String u = in.readLine();
         System.out.println(u);
-        if(contatti.getSize() == 0){
+        if(utenti.getSize() == 0){
             out.writeBytes("v\n");
             fine = true;
         }else{
             do { 
                 //controllo username utente
                 int name = 0;
-                for(int i = 0; i < contatti.getSize(); i++){
-                    if(contatti.getUtente(i).getUsername().equals(u)){
+                for(int i = 0; i < utenti.getSize(); i++){
+                    if(utenti.getUtente(i).getUsername().equals(u)){
                         name = 1;
                     }  
                 }
@@ -193,7 +214,7 @@ public class MyThread extends Thread {
         String psw = in.readLine();
         System.out.println(psw);
         user = new Utente(u, psw);
-        contatti.addUtente(user);
+        utenti.addUtente(user);
         return fine;
     }
 
@@ -205,6 +226,10 @@ public class MyThread extends Thread {
 
     public Utente getUser(){
         return user;
+    }
+
+    public int getterId(){
+        return id;
     }
 
 }
