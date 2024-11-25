@@ -12,23 +12,30 @@ import java.util.Random;
 
 import javax.print.DocFlavor.STRING;
 
+import com.example.chat_themes.GamingTheme;
+import com.example.chat_themes.SchoolTheme;
+
 public class MyThread extends Thread {
       
     private Socket s;
     private ListaUtenti utenti;
     private ArrayList<MyThread> Threads;
     private ArrayList<ListaChat> listaChat;
+    private SchoolTheme schoolTheme;
+    private GamingTheme gamingTheme;
     private int chatCodice;
     private Utente user;
     private int id;
     BufferedReader in;
     DataOutputStream out;
 
-    public MyThread(Socket s, ListaUtenti lista, int idThreads, ArrayList<MyThread> list) throws IOException{
+    public MyThread(Socket s, ListaUtenti lista, int idThreads, ArrayList<MyThread> list, SchoolTheme st, GamingTheme gt) throws IOException{
         this.s = s;
         this.utenti = lista;
         this.Threads = list;
         this.listaChat = new ArrayList<ListaChat>();
+        this.schoolTheme = st;
+        this.gamingTheme = gt;
         this.chatCodice = 1;
         this.id = idThreads;
         this.in = new BufferedReader(new InputStreamReader(s.getInputStream()));
@@ -78,15 +85,27 @@ public class MyThread extends Thread {
                         System.out.println(user.getUsername() + "size: " + listaChat.size());
                         if(listaChat.size() == 0){
                             String uname = in.readLine(); // Nome del destinatario
+                            String theme = in.readLine();
                             Utente userChat = utenti.presente(uname);
                             if (userChat != null) {
-                                Chat chat = new Chat();
+                                Chat chat = new Chat(theme);
                                 ListaChat newChat = createListaChat(uname, chat);
                                 MyThread dstThread = getUserThread(uname);
                                 dstThread.createListaChat(user.getUsername(), chat);
                                 out.writeBytes("u_v\n");
-                                String testo = in.readLine();
-                                newChat.addChat(user.getUsername(), testo);
+                                String msg;
+                                boolean rightTheme = false;
+                                do {
+                                    String testo = in.readLine();
+                                    msg = controlloTematica(chat, testo);
+                                    if(msg.equals("!txt")){
+                                        out.writeBytes(msg + "\n");
+                                        rightTheme = false;
+                                    }else{
+                                        rightTheme = true;
+                                    }
+                                } while (!rightTheme);
+                                newChat.addChat(user.getUsername(), msg);
                                 dstThread.receivedText(user.getUsername());
                             } else {
                                 out.writeBytes("!u\n"); // Destinatario non trovato
@@ -104,15 +123,27 @@ public class MyThread extends Thread {
                                 switch (answer) {
                                     case "new":
                                         String uname = in.readLine(); // Nome del destinatario
+                                        String theme = in.readLine();
                                         Utente userChat = utenti.presente(uname);
                                         if (userChat != null) {
-                                            Chat chat = new Chat();
+                                            Chat chat = new Chat(theme);
                                             ListaChat newChat = createListaChat(uname, chat);
                                             MyThread dstThread = getUserThread(uname);
                                             dstThread.createListaChat(user.getUsername(), chat);
                                             out.writeBytes("u_v\n");
-                                            String testo = in.readLine();
-                                            newChat.addChat(user.getUsername(), testo);
+                                            String msg;
+                                            boolean rightTheme = false;
+                                            do {
+                                                String testo = in.readLine();
+                                                msg = controlloTematica(chat, testo);
+                                                if(msg.equals("!txt")){
+                                                    out.writeBytes(msg + "\n");
+                                                    rightTheme = false;
+                                                }else{
+                                                    rightTheme = true;
+                                                }
+                                            } while (!rightTheme);
+                                            newChat.addChat(user.getUsername(), msg);
                                             dstThread.receivedText(user.getUsername());
                                             controllo = false;
                                         } else {
@@ -124,6 +155,19 @@ public class MyThread extends Thread {
 
                                     case "exit":
                                         controllo = false;
+                                        break;
+
+                                    case "theme":
+                                        String chosedTheme = in.readLine();
+                                        switch (chosedTheme) {
+                                            case "SL":
+                                                schoolTheme.showText(out);
+                                                break;
+                                        
+                                            case "GM":
+                                                gamingTheme.showText(out);
+                                                break;
+                                        }
                                         break;
                                 
                                     default:
@@ -295,6 +339,19 @@ public class MyThread extends Thread {
         listaChat.add(lista);
         chatCodice++;
         return lista;
+    }
+
+    public String controlloTematica(Chat chat, String text){
+        switch (chat.getTheme()) {
+            case "SL":
+                return schoolTheme.getThemeMessage(text);
+        
+            case "GM":
+                return schoolTheme.getThemeMessage(text);
+
+            default:
+                return text;
+        }
     }
 
     public BufferedReader getIn() {

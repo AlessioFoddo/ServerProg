@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 public class Chat {
     private ArrayList<Message> chat;
+    private String theme;
     private int codice = 1;
 
     public void addChat(String username, String text){
@@ -24,7 +25,12 @@ public class Chat {
         return chat.size();
     }
 
-    public Chat(){
+    public String getTheme(){
+        return theme;
+    }
+
+    public Chat(String theme){
         this.chat = new ArrayList<Message>();
+        this.theme = theme;
     }
 }
