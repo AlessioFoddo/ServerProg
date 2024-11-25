@@ -16,7 +16,6 @@ public class MyThread extends Thread {
     private Socket s;
     private ListaUtenti utenti;
     private ArrayList<MyThread> Threads;
-    private ArrayList<ListaChat> listaChat;
     private SchoolTheme schoolTheme;
     private GamingTheme gamingTheme;
     private int chatCodice;
@@ -29,7 +28,6 @@ public class MyThread extends Thread {
         this.s = s;
         this.utenti = lista;
         this.Threads = list;
-        this.listaChat = new ArrayList<ListaChat>();
         this.schoolTheme = st;
         this.gamingTheme = gt;
         this.chatCodice = 1;
@@ -73,8 +71,8 @@ public class MyThread extends Thread {
     
                 switch (scelta) {
                     case "Chat":
-                        out.writeByte(listaChat.size());
-                        if(listaChat.size() == 0){
+                        out.writeByte(user.getListaChat().size());
+                        if(user.getListaChat().size() == 0){
                             String uname = in.readLine(); // Nome del destinatario
                             String theme = in.readLine();
                             Utente userChat = utenti.presente(uname);
@@ -103,8 +101,8 @@ public class MyThread extends Thread {
                                 break;
                             }
                         }else{
-                            out.writeByte(listaChat.size()); 
-                            for (ListaChat chat : listaChat) {
+                            out.writeByte(user.getListaChat().size()); 
+                            for (ListaChat chat : user.getListaChat()) {
                                 chat.mostraChat(out);
                             }
                             boolean controllo = true;
@@ -164,7 +162,7 @@ public class MyThread extends Thread {
                                         try {
                                             int code = Integer.parseInt(answer);
                                             ListaChat conversazione = null;
-                                            for (ListaChat chat : listaChat) {
+                                            for (ListaChat chat : user.getListaChat()) {
                                                 if(chat.getCodice() == code){
                                                     conversazione = chat;
                                                     controllo = false;
@@ -177,8 +175,19 @@ public class MyThread extends Thread {
                                                 out.writeBytes("u_v\n");
                                                 out.writeByte(conversazione.getSize());
                                                 conversazione.getChat().outChat(out);
-                                                String text = in.readLine();
-                                                conversazione.addChat(user.getUsername(), text);
+                                                String msg;
+                                                boolean rightTheme = false;
+                                                do {
+                                                    String testo = in.readLine();
+                                                    msg = controlloTematica(conversazione.getChat(), testo);
+                                                    if(msg.equals("!txt")){
+                                                        out.writeBytes(msg + "\n");
+                                                        rightTheme = false;
+                                                    }else{
+                                                        rightTheme = true;
+                                                    }
+                                                } while (!rightTheme);
+                                                conversazione.addChat(user.getUsername(), msg);
                                                 getUserThread(conversazione.getDstUser()).receivedText(user.getUsername());;
                                                 controllo = false;
                                             }else{
@@ -294,7 +303,7 @@ public class MyThread extends Thread {
             } while (!fine);
         }
         String psw = in.readLine();
-        user = new Utente(u, psw, listaChat);
+        user = new Utente(u, psw);
         utenti.addUtente(user);
         return fine;
     }
@@ -325,7 +334,7 @@ public class MyThread extends Thread {
 
     public ListaChat createListaChat(String name, Chat chat){
         ListaChat lista = new ListaChat(name, chatCodice, chat);
-        listaChat.add(lista);
+        user.getListaChat().add(lista);
         chatCodice++;
         return lista;
     }

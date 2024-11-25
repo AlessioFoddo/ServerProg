@@ -24,10 +24,10 @@ public class Utente {
         this.password = password;
     }
 
-    public Utente(String uname, String psw, ArrayList<ListaChat> lista){
+    public Utente(String uname, String psw){
         this.username = uname;
         this.password = psw;
-        this.listaChat = lista;
+        this.listaChat = new ArrayList<ListaChat>();;
     }
 
 }
