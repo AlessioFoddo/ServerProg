@@ -1,14 +1,16 @@
 package com.example;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.util.ArrayList;
 
 public class Utente {
     
     private String username;
     private String password;
+    private ArrayList<ListaChat> listaChat;
 
+    public ArrayList<ListaChat> getListaChat(){
+        return listaChat;
+    }
     public String getUsername() {
         return username;
     }
@@ -22,9 +24,10 @@ public class Utente {
         this.password = password;
     }
 
-    public Utente(String uname, String psw){
+    public Utente(String uname, String psw, ArrayList<ListaChat> lista){
         this.username = uname;
         this.password = psw;
+        this.listaChat = lista;
     }
 
 }

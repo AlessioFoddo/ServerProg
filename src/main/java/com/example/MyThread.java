@@ -195,7 +195,7 @@ public class MyThread extends Thread {
                             }while(controllo);
                         }
     
-                    case "Members": //caso SIGN UP
+                    case "Members":
                         for(int i  = 0; i < utenti.getSize(); i++){
                             out.writeBytes(utenti.getUtente(i).getUsername() + "\n");
                         }
@@ -203,7 +203,7 @@ public class MyThread extends Thread {
                         fine = false;
                         break;
 
-                    case "Out": //caso uscita
+                    case "Out":
                         user = null;
                         for(int i = 0; i < Threads.size(); i++){
                             if(Threads.get(i).getId() == id){
@@ -237,7 +237,6 @@ public class MyThread extends Thread {
             out.writeBytes("fw\n");
         }
         String u = in.readLine();
-        out.writeBytes("username ricevuto\n");
         String p = in.readLine();
         //controllo utente
         String answer = "";
@@ -295,7 +294,7 @@ public class MyThread extends Thread {
             } while (!fine);
         }
         String psw = in.readLine();
-        user = new Utente(u, psw);
+        user = new Utente(u, psw, listaChat);
         utenti.addUtente(user);
         return fine;
     }
