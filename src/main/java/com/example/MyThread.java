@@ -16,8 +16,9 @@ public class MyThread extends Thread {
       
     private Socket s;
     private ListaUtenti utenti;
-    private ListaUtenti listaChat;
     private ArrayList<MyThread> Threads;
+    private ArrayList<ListaChat> listaChat;
+    private int chatCodice;
     private Utente user;
     private int id;
     BufferedReader in;
@@ -26,9 +27,10 @@ public class MyThread extends Thread {
     public MyThread(Socket s, ListaUtenti lista, int idThreads, ArrayList<MyThread> list) throws IOException{
         this.s = s;
         this.utenti = lista;
-        this.listaChat = new ListaUtenti();
         this.Threads = list;
-        id = idThreads;
+        this.listaChat = new ArrayList<ListaChat>();
+        this.chatCodice = 1;
+        this.id = idThreads;
         this.in = new BufferedReader(new InputStreamReader(s.getInputStream()));
         this.out = new DataOutputStream(s.getOutputStream());
     }
@@ -72,44 +74,90 @@ public class MyThread extends Thread {
     
                 switch (scelta) {
                     case "Chat":
-                        String uname = in.readLine(); // Nome del destinatario
-                        Utente userChat = utenti.presente(uname);
-
-                        if (userChat != null) {
-                            out.writeBytes("u_v\n");
-                            listaChat.addUtente(userChat);
-                        } else {
-                            out.writeBytes("!u\n"); // Destinatario non trovato
-                            break;
-                        }
-
-                        boolean endChat = false;
-                        while (!endChat) {
-                            String testo = in.readLine();
-                            if (testo.equals("end")) {
-                                endChat = true;
+                        out.writeByte(listaChat.size());
+                        System.out.println(user.getUsername() + "size: " + listaChat.size());
+                        if(listaChat.size() == 0){
+                            String uname = in.readLine(); // Nome del destinatario
+                            Utente userChat = utenti.presente(uname);
+                            if (userChat != null) {
+                                Chat chat = new Chat();
+                                ListaChat newChat = createListaChat(uname, chat);
+                                MyThread dstThread = getUserThread(uname);
+                                dstThread.createListaChat(user.getUsername(), chat);
+                                out.writeBytes("u_v\n");
+                                String testo = in.readLine();
+                                newChat.addChat(user.getUsername(), testo);
+                                dstThread.receivedText(user.getUsername());
+                            } else {
+                                out.writeBytes("!u\n"); // Destinatario non trovato
                                 break;
                             }
-
-                            for (MyThread th : Threads) {
-                                if (th.getUser() != null && th.getUser().getUsername().equals(uname)) {
-                                    th.receivedText(user.getUsername(), testo);
-                                    break;
-                                }
+                        }else{
+                            out.writeByte(listaChat.size()); 
+                            System.out.println(listaChat.size());
+                            for (ListaChat chat : listaChat) {
+                                chat.mostraChat(out);
                             }
+                            boolean controllo = true;
+                            do{
+                                String answer = in.readLine();
+                                switch (answer) {
+                                    case "new":
+                                        String uname = in.readLine(); // Nome del destinatario
+                                        Utente userChat = utenti.presente(uname);
+                                        if (userChat != null) {
+                                            Chat chat = new Chat();
+                                            ListaChat newChat = createListaChat(uname, chat);
+                                            MyThread dstThread = getUserThread(uname);
+                                            dstThread.createListaChat(user.getUsername(), chat);
+                                            out.writeBytes("u_v\n");
+                                            String testo = in.readLine();
+                                            newChat.addChat(user.getUsername(), testo);
+                                            dstThread.receivedText(user.getUsername());
+                                            controllo = false;
+                                        } else {
+                                            out.writeBytes("!u\n"); // Destinatario non trovato
+                                            controllo = true;
+                                            break;
+                                        }
+                                        break;
+
+                                    case "exit":
+                                        controllo = false;
+                                        break;
+                                
+                                    default:
+                                        int code = Integer.parseInt(answer);
+                                        ListaChat conversazione = null;
+                                        for (ListaChat chat : listaChat) {
+                                            if(chat.getCodice() == code){
+                                                conversazione = chat;
+                                                controllo = false;
+                                                break;
+                                            }else{
+                                                controllo = true;
+                                            }
+                                        }
+                                        if(conversazione != null){
+                                            out.writeBytes("u_v\n");
+                                            out.writeByte(conversazione.getSize());
+                                            conversazione.getChat().outChat(out);
+                                            String text = in.readLine();
+                                            conversazione.addChat(user.getUsername(), text);
+                                            getUserThread(conversazione.getDstUser()).receivedText(user.getUsername());;
+                                            controllo = false;
+                                        }else{
+                                            out.writeBytes("!u\n");
+                                            controllo = true;
+                                        }
+                                        break;
+                                }
+                            }while(controllo);
                         }
-                        fine = false;
-                        break;
     
                     case "Members": //caso SIGN UP
                         for(int i  = 0; i < utenti.getSize(); i++){
-                            int idThread = 0;
-                            for (MyThread th : Threads) {
-                                if(th != null && th.getUser().getUsername().equals(utenti.getUtente(i).getUsername())){
-                                    idThread = th.getterId();
-                                }
-                            }
-                            out.writeBytes("Thread: " + idThread + ", " + utenti.getUtente(i).getUsername() + "\n");
+                            out.writeBytes(utenti.getUtente(i).getUsername() + "\n");
                         }
                         out.writeBytes("end\n");
                         fine = false;
@@ -218,10 +266,9 @@ public class MyThread extends Thread {
         return fine;
     }
 
-    public void receivedText(String name, String text) throws IOException{
+    public void receivedText(String name) throws IOException{
         out.writeBytes("msg\n");
         out.writeBytes(name + "\n");
-        out.writeBytes(text + "\n");
     }
 
     public Utente getUser(){
@@ -230,6 +277,32 @@ public class MyThread extends Thread {
 
     public int getterId(){
         return id;
+    }
+
+    public MyThread getUserThread( String uname ){
+        for (int i = 0; i < utenti.getSize(); i++){
+            for (MyThread th : Threads) {
+                if (th.getUser() != null && th.getUser().getUsername().equals(uname)) {
+                    return th;
+                }
+            }
+        }
+        return null;
+    }
+
+    public ListaChat createListaChat(String name, Chat chat){
+        ListaChat lista = new ListaChat(name, chatCodice, chat);
+        listaChat.add(lista);
+        chatCodice++;
+        return lista;
+    }
+
+    public BufferedReader getIn() {
+        return in;
+    }
+
+    public DataOutputStream getOut() {
+        return out;
     }
 
 }

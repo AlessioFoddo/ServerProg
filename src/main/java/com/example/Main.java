@@ -9,7 +9,7 @@ import java.util.ArrayList;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        ArrayList<MyThread> listaThread = new ArrayList();
+        ArrayList<MyThread> listaThread = new ArrayList<MyThread>();
         ListaUtenti listaUtenti = new ListaUtenti();
         System.out.println("Hello world!");
         ServerSocket server = new ServerSocket(3000);
